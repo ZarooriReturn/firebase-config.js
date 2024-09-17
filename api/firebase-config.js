@@ -1,4 +1,4 @@
-// api/firebase-config.js
+import { getAuth, verifyIdToken } from 'firebase-admin/auth';
 import admin from 'firebase-admin';
 
 // Initialize Firebase Admin SDK
@@ -12,7 +12,7 @@ export default async function handler(req, res) {
     // Set CORS headers
     res.setHeader('Access-Control-Allow-Origin', 'https://www.zaroorireturn.com'); // Replace with your allowed domain
     res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS'); // Allow GET requests and OPTIONS preflight
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization'); // Allow Content-Type and Authorization headers
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type'); // Allow Content-Type header
 
     // Handle OPTIONS preflight request
     if (req.method === 'OPTIONS') {
@@ -27,7 +27,7 @@ export default async function handler(req, res) {
         }
 
         try {
-            const decodedToken = await admin.auth().verifyIdToken(idToken);
+            const decodedToken = await verifyIdToken(idToken);
             if (decodedToken) {
                 res.status(200).json({
                     apiKey: process.env.FIREBASE_API_KEY,
