@@ -2,8 +2,8 @@
 
 export default function handler(req, res) {
     // Set CORS headers
-    res.setHeader('Access-Control-Allow-Origin', 'https://www.zaroorireturn.com'); // Replace with your domain
-    res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS'); // Allow GET and OPTIONS requests
+    res.setHeader('Access-Control-Allow-Origin', 'https://www.zaroorireturn.com'); // Allow your domain
+    res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS'); // Allow GET and OPTIONS methods
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type'); // Allow Content-Type header
 
     // Handle OPTIONS preflight request
@@ -12,9 +12,9 @@ export default function handler(req, res) {
     }
 
     if (req.method === 'GET') {
-        // Check the Referer header
+        // Check the Referer header (optional, for extra security)
         const referer = req.headers.referer || '';
-        if (!referer.startsWith('https://www.zaroorireturn.com')) { // Replace with your domain
+        if (!referer.startsWith('https://www.zaroorireturn.com')) {
             return res.status(403).json({ error: 'Forbidden' });
         }
 
