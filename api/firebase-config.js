@@ -1,18 +1,10 @@
 // api/firebase-config.js
-import admin from 'firebase-admin';
 
-// Initialize Firebase Admin SDK
-if (!admin.apps.length) {
-    admin.initializeApp({
-        credential: admin.credential.applicationDefault()
-    });
-}
-
-export default async function handler(req, res) {
+export default function handler(req, res) {
     // Set CORS headers
-    res.setHeader('Access-Control-Allow-Origin', 'https://www.zaroorireturn.com'); // Replace with your allowed domain
-    res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS'); // Allow GET requests and OPTIONS preflight
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization'); // Allow Content-Type and Authorization headers
+    res.setHeader('Access-Control-Allow-Origin', 'https://www.zaroorireturn.com'); // Replace with your domain
+    res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS'); // Allow GET and OPTIONS requests
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type'); // Allow Content-Type header
 
     // Handle OPTIONS preflight request
     if (req.method === 'OPTIONS') {
@@ -20,29 +12,21 @@ export default async function handler(req, res) {
     }
 
     if (req.method === 'GET') {
-        // Verify the ID token from the request header
-        const idToken = req.headers['authorization']?.split('Bearer ')[1];
-        if (!idToken) {
-            return res.status(401).json({ error: 'Unauthorized' });
+        // Check the Referer header
+        const referer = req.headers.referer || '';
+        if (!referer.startsWith('https://www.zaroorireturn.com')) { // Replace with your domain
+            return res.status(403).json({ error: 'Forbidden' });
         }
 
-        try {
-            const decodedToken = await admin.auth().verifyIdToken(idToken);
-            if (decodedToken) {
-                res.status(200).json({
-                    apiKey: process.env.FIREBASE_API_KEY,
-                    authDomain: process.env.FIREBASE_AUTH_DOMAIN,
-                    projectId: process.env.FIREBASE_PROJECT_ID,
-                    storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
-                    messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID,
-                    appId: process.env.FIREBASE_APP_ID
-                });
-            } else {
-                res.status(403).json({ error: 'Forbidden' });
-            }
-        } catch (error) {
-            res.status(403).json({ error: 'Invalid token' });
-        }
+        // Send Firebase configuration
+        res.status(200).json({
+            apiKey: process.env.FIREBASE_API_KEY,
+            authDomain: process.env.FIREBASE_AUTH_DOMAIN,
+            projectId: process.env.FIREBASE_PROJECT_ID,
+            storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
+            messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID,
+            appId: process.env.FIREBASE_APP_ID
+        });
     } else {
         res.setHeader('Allow', ['GET', 'OPTIONS']); // Only allow GET and OPTIONS
         res.status(405).end(`Method ${req.method} Not Allowed`);
