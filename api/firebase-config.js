@@ -1,13 +1,14 @@
-// api/firebase-config.js
+import { getAuth, verifyIdToken } from 'firebase-admin/auth';
+import admin from 'firebase-admin';
 
-export default function handler(req, res) {
-    const apiKey = req.headers['x-api-key'];
+// Initialize Firebase Admin SDK
+if (!admin.apps.length) {
+    admin.initializeApp({
+        credential: admin.credential.applicationDefault()
+    });
+}
 
-    // Replace 'your-secure-api-key' with your actual API key
-    if (apiKey !== 'your-secure-api-key') {
-        return res.status(403).json({ error: 'Forbidden' });
-    }
-
+export default async function handler(req, res) {
     // Set CORS headers
     res.setHeader('Access-Control-Allow-Origin', 'https://www.zaroorireturn.com'); // Replace with your allowed domain
     res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS'); // Allow GET requests and OPTIONS preflight
@@ -19,14 +20,29 @@ export default function handler(req, res) {
     }
 
     if (req.method === 'GET') {
-        res.status(200).json({
-            apiKey: process.env.FIREBASE_API_KEY,
-            authDomain: process.env.FIREBASE_AUTH_DOMAIN,
-            projectId: process.env.FIREBASE_PROJECT_ID,
-            storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
-            messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID,
-            appId: process.env.FIREBASE_APP_ID
-        });
+        // Verify the ID token from the request header
+        const idToken = req.headers['authorization']?.split('Bearer ')[1];
+        if (!idToken) {
+            return res.status(401).json({ error: 'Unauthorized' });
+        }
+
+        try {
+            const decodedToken = await verifyIdToken(idToken);
+            if (decodedToken) {
+                res.status(200).json({
+                    apiKey: process.env.FIREBASE_API_KEY,
+                    authDomain: process.env.FIREBASE_AUTH_DOMAIN,
+                    projectId: process.env.FIREBASE_PROJECT_ID,
+                    storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
+                    messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID,
+                    appId: process.env.FIREBASE_APP_ID
+                });
+            } else {
+                res.status(403).json({ error: 'Forbidden' });
+            }
+        } catch (error) {
+            res.status(403).json({ error: 'Invalid token' });
+        }
     } else {
         res.setHeader('Allow', ['GET', 'OPTIONS']); // Only allow GET and OPTIONS
         res.status(405).end(`Method ${req.method} Not Allowed`);
